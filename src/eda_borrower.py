@@ -31,19 +31,9 @@ class BorrowerProfileEDA:
         self.target_col = target_col
 
     def structure_summary(self) -> pd.DataFrame:
-        """
-        Return a DataFrame with one row per column in BORROWER_COLS:
-        - column: column name
-        - dtype: pandas dtype
-        - n_missing: number of missing values
-        - missing_pct: percentage of missing values
-        - n_unique: number of unique values
-        - goal is to create a function that tells me all the information above about the columns in borrower_cols
-        - if I dont find any data return none
-        """
-
+        # Create empty list
         rows = []
-
+        # Loop over BORROWER_COLS and if empty fields fill with dict
         for col in BORROWER_COLS:
             if col not in  self.df.columns:
                 rows.append({
@@ -54,8 +44,10 @@ class BorrowerProfileEDA:
                     "n_unique" : None
             })
             else:
+                # create series
                 s = self.df[col]
 
+                # fill series with asked information about data
                 rows.append({
                     "column" : col,
                     "dtype" : s.dtype,
@@ -63,52 +55,48 @@ class BorrowerProfileEDA:
                     "missing_pct" : (s.isna().mean() *100),
                     "n_unique" : s.nunique(dropna=True)
             })
+        # return Dataframe with Information about the data
         return pd.DataFrame(rows)
 
     def income_summary(self) -> pd.DataFrame:
-        """
-        Return basic stats (count, mean, std, min, max, quartiles)
-        for:
-        - annual_inc
-        - annual_inc_joint
-
-        Use df[["annual_inc", "annual_inc_joint"]].describe().T
-        or equivalent.
-        """
-
+        #provide information about two explicit columns via describe().T
         return self.df[["annual_inc", "annual_inc_joint"]].describe().T
 
+
     def categorical_freqs(self, max_levels: int = 10) -> Dict[str, pd.Series]:
-        """
-        For important categorical borrower columns (e.g. home_ownership,
-        addr_state, purpose), return a dict:
-
-            {
-              "home_ownership": Series of top levels,
-              "addr_state": Series of top levels,
-              ...
-            }
-
-        Each Series should be the result of value_counts().head(max_levels).
-        """
+        # create variable for list of columns
         cat_cols = ['home_ownership', 'addr_state', 'purpose']
-
+        # create empty dict to return info
         result = {}
-
+        # loop over specified columns and write value_counts in dict result
         for col in cat_cols:
           if col in self.df.columns:
             result[col] = self.df[col].value_counts.head(max_levels)
           else:
             result[col] = None
-
+        # return dict with result
         return result
 
-    def default_rate_by_category(self, col: str) -> pd.Series:
-        """
-        For a given categorical column (e.g. 'home_ownership' or 'purpose'),
-        compute the default rate per category.
 
-        Default rate = mean of self.target_col for each category.
-        Return a pandas Series indexed by category, with values in [0, 1].
-        """
+    def default_rate_by_category(self, col: str) -> pd.Series:
         return self.df.groupby(col)[self.target_col].mean()
+
+def borrower_eda_steps(eda: BorrowerProfileEDA) -> Dict[str, Callable[[], Any]]:
+
+        return {
+        "structure": eda.structure_summary,
+        "income": eda.income_summary,
+        "freqs": lambda: eda.categorical_freqs(max_levels=10),
+        "default_by_home_ownership": lambda: eda.default_rate_by_category("home_ownership"),
+        "default_by_purpose": lambda: eda.default_rate_by_category("purpose"),
+    }
+
+
+    def run_borrower_eda_pipeline(eda: BorrowerProfileEDA) -> Dict[str, Any]:
+        steps = borrower_eda_steps(eda)
+        results = {}
+
+        for name, func in steps.items():
+            results[name] = func()  # call the stored function
+
+        return results
