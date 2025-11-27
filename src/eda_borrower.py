@@ -83,7 +83,7 @@ class BorrowerProfileEDA:
 
 def borrower_eda_steps(eda: BorrowerProfileEDA) -> Dict[str, Callable[[], Any]]:
 
-        return {
+    return {
         "structure": eda.structure_summary,
         "income": eda.income_summary,
         "freqs": lambda: eda.categorical_freqs(max_levels=10),
@@ -92,11 +92,11 @@ def borrower_eda_steps(eda: BorrowerProfileEDA) -> Dict[str, Callable[[], Any]]:
     }
 
 
-    def run_borrower_eda_pipeline(eda: BorrowerProfileEDA) -> Dict[str, Any]:
-        steps = borrower_eda_steps(eda)
-        results = {}
+def run_borrower_eda_pipeline(eda: BorrowerProfileEDA) -> Dict[str, Any]:
+    steps = borrower_eda_steps(eda)
+    results = {}
 
-        for name, func in steps.items():
-            results[name] = func()  # call the stored function
+    for name, func in steps.items():
+        results[name] = func()  # call the stored function
 
-        return results
+    return results
