@@ -71,7 +71,7 @@ class BorrowerProfileEDA:
         # loop over specified columns and write value_counts in dict result
         for col in cat_cols:
           if col in self.df.columns:
-            result[col] = self.df[col].value_counts.head(max_levels)
+            result[col] = self.df[col].value_counts().head(max_levels)
           else:
             result[col] = None
         # return dict with result
